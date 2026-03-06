@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agentic Engineering Heuristics Viewer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..800&family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="viewer.css" />
+  </head>
+  <body>
+    <div class="ambient"></div>
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Reference Viewer</p>
+        <h1>Agentic Engineering Heuristics</h1>
+        <p id="purpose" class="lede">Loading document purpose...</p>
+      </div>
+      <section id="overview" class="overview-card"></section>
+      <div class="controls">
+        <label class="control">
+          <span>Search</span>
+          <input id="search" type="search" placeholder="Try: verification, H06, context..." />
+        </label>
+        <label class="control">
+          <span>Section</span>
+          <select id="section-filter">
+            <option value="all">All Content</option>
+            <option value="heuristics">Heuristics</option>
+            <option value="anti_patterns">Anti-Patterns</option>
+            <option value="sequence">Operating Sequence</option>
+          </select>
+        </label>
+        <div class="control mode-control">
+          <span>View</span>
+          <div class="segmented">
+            <button type="button" class="mode-button is-active" data-view="summary">Summary List</button>
+            <button type="button" class="mode-button" data-view="detail">Detail View</button>
+          </div>
+        </div>
+        <label class="control hidden" id="heuristic-picker-control">
+          <span>Focused Heuristic</span>
+          <select id="heuristic-select"></select>
+        </label>
+      </div>
+      <div class="stats" id="stats"></div>
+    </header>
+
+    <main class="content">
+      <section id="sequence" class="panel hidden"></section>
+      <section id="heuristics" class="panel hidden">
+        <div class="section-header">
+          <div>
+            <p class="section-kicker">Heuristics</p>
+            <h2 class="section-heading">Browse the full set</h2>
+          </div>
+          <p id="heuristics-caption" class="section-note"></p>
+        </div>
+        <div id="heuristics-summary" class="summary-list"></div>
+        <div id="heuristic-detail" class="detail-view hidden"></div>
+      </section>
+      <section id="anti-patterns" class="panel"></section>
+    </main>
+
+    <template id="heuristic-summary-template">
+      <article class="card heuristic-summary-card">
+        <div class="card-head">
+          <span class="badge"></span>
+          <h3></h3>
+        </div>
+        <p class="summary"></p>
+        <div class="summary-meta"></div>
+        <button type="button" class="open-detail">Open detail</button>
+      </article>
+    </template>
+
+    <template id="anti-pattern-template">
+      <article class="card anti-pattern-card">
+        <h3></h3>
+        <p></p>
+      </article>
+    </template>
+
+    <script src="viewer.js" defer></script>
+  </body>
+</html>

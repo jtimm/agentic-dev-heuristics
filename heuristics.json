@@ -1,0 +1,596 @@
+{
+  "document_name": "agentic_engineering_heuristics",
+  "version": "1.1",
+  "purpose": "A structured set of practical heuristics for agentic software development, emphasizing context control, workflow design, verification, and iterative refinement.",
+  "intended_audience": [
+    "human software engineers",
+    "AI coding agents",
+    "orchestration systems",
+    "teams designing agent workflows"
+  ],
+  "top_level_principle": {
+    "name": "Own the system, not just the prompt",
+    "summary": "Agent performance is shaped less by clever prompting alone and more by the design of the surrounding workflow: task boundaries, context quality, rules, verification, and cleanup.",
+    "implications": [
+      "Do not rely on raw model intelligence alone.",
+      "Design the environment in which the agent works.",
+      "Assume responsibility for the outcome even when delegation is heavy."
+    ]
+  },
+  "heuristics": [
+    {
+      "id": "H01",
+      "name": "Prefer the thinnest viable workflow",
+      "summary": "Use the minimum tooling, abstraction, and orchestration necessary to solve the real problem you currently have.",
+      "why_it_matters": [
+        "Every added layer increases cognitive overhead.",
+        "Many agent pain points are temporary and may disappear as base models and products improve.",
+        "Complex harnesses can lock teams into solutions for problems that later become irrelevant.",
+        "Simple workflows also make it easier to understand, revert, or isolate mistakes when agents act incorrectly."
+      ],
+      "signals_of_good_use": [
+        "The workflow is easy to explain.",
+        "Each added tool solves a clearly observable problem.",
+        "Removing a tool would create a specific regression.",
+        "Changes are easy to isolate or revert if they prove incorrect."
+      ],
+      "failure_modes": [
+        "Tooling sprawl",
+        "premature abstraction",
+        "cargo-cult adoption of community patterns",
+        "debugging the harness instead of solving the task"
+      ],
+      "agent_instruction_pattern": [
+        "Use built-in capabilities first.",
+        "Only invoke specialized layers when they provide clear incremental value."
+      ],
+      "human_review_questions": [
+        "What real problem does this tool solve?",
+        "Would we still choose this layer if the model improved next month?",
+        "Is the complexity proportional to the pain it removes?"
+      ],
+      "when_it_breaks": [
+        "Enterprise governance requirements",
+        "strict auditability needs",
+        "complex multi-repo orchestration",
+        "security or compliance environments requiring explicit control layers"
+      ]
+    },
+    {
+      "id": "H02",
+      "name": "Treat context as a scarce resource",
+      "summary": "Provide the exact context needed for the current task and avoid flooding the agent with stale, global, or irrelevant information.",
+      "why_it_matters": [
+        "Too much context reduces signal-to-noise ratio.",
+        "Irrelevant instructions can distort reasoning and implementation.",
+        "Agent failures often stem from confusion, not lack of capability."
+      ],
+      "signals_of_good_use": [
+        "The agent is working from a small set of relevant files and instructions.",
+        "There is little evidence of the agent dragging unrelated history into the task.",
+        "The task prompt and working context are tightly aligned."
+      ],
+      "failure_modes": [
+        "context bloat",
+        "instruction collision",
+        "stale memory contamination",
+        "loading broad repo history into narrow implementation tasks"
+      ],
+      "agent_instruction_pattern": [
+        "Before acting, load only the task plan, the acceptance criteria, and the relevant files.",
+        "Do not consult unrelated memory or historical notes unless explicitly required."
+      ],
+      "human_review_questions": [
+        "What information is essential for this task?",
+        "What information is merely available but not useful?",
+        "What prior instructions could conflict with this work?"
+      ],
+      "when_it_breaks": [
+        "Deep architectural investigations",
+        "cross-cutting migrations",
+        "tasks where local changes depend on broad system invariants"
+      ]
+    },
+    {
+      "id": "H03",
+      "name": "Separate research from implementation",
+      "summary": "Do not force the same execution context to both explore solution options and implement one of them unless necessary.",
+      "why_it_matters": [
+        "Research expands the option space.",
+        "Implementation benefits from narrowed constraints.",
+        "Mixing both modes encourages silent assumption-making and muddy execution."
+      ],
+      "signals_of_good_use": [
+        "A design or decision phase exists before coding begins.",
+        "The implementation task references a chosen approach rather than an open-ended problem.",
+        "Agents are not simultaneously debating architecture and writing code."
+      ],
+      "failure_modes": [
+        "implementation drift",
+        "premature commitment",
+        "hallucinated requirements",
+        "hidden architecture decisions made during coding"
+      ],
+      "agent_instruction_pattern": [
+        "If implementation details are not fixed, first produce a bounded research memo comparing options.",
+        "After a decision is made, begin a fresh implementation task using only the chosen design."
+      ],
+      "human_review_questions": [
+        "Has the implementation target actually been selected?",
+        "Is this coding task secretly still a design problem?",
+        "Would a fresh execution context improve focus?"
+      ],
+      "when_it_breaks": [
+        "Legacy systems where discovery and implementation must interleave",
+        "rapid prototyping",
+        "spike tasks intended to test feasibility rather than produce final code"
+      ]
+    },
+    {
+      "id": "H04",
+      "name": "Use neutral prompts for investigation",
+      "summary": "When asking agents to inspect, debug, or review, avoid prompts that presuppose the conclusion.",
+      "why_it_matters": [
+        "Agents are highly compliant and can be biased toward producing the requested kind of finding.",
+        "A prompt that assumes a bug exists often increases false positives.",
+        "Neutral phrasing improves the balance between discovery and skepticism."
+      ],
+      "signals_of_good_use": [
+        "The prompt asks the agent to inspect and report findings rather than prove a specific outcome.",
+        "Outputs include confirmed findings, ambiguous findings, and no-issue findings when appropriate.",
+        "The agent distinguishes evidence from speculation."
+      ],
+      "failure_modes": [
+        "confirmation bias",
+        "invented bugs",
+        "overconfident audits",
+        "selective reading of evidence"
+      ],
+      "agent_instruction_pattern": [
+        "Trace the logic of the component and report all findings, separating confirmed issues, possible concerns, and normal behavior."
+      ],
+      "human_review_questions": [
+        "Did I ask the agent to discover, or did I ask it to justify my suspicion?",
+        "Are the reported problems grounded in observable evidence?",
+        "What would a neutral reading of the same code say?"
+      ],
+      "when_it_breaks": [
+        "Targeted red-team tasks where forcing a threat-seeking posture is deliberate",
+        "time-boxed reviews focused on one known risk class"
+      ]
+    },
+    {
+      "id": "H05",
+      "name": "Exploit adversarial analysis, but do not trust it blindly",
+      "summary": "Use multiple passes with different incentives or roles to improve reliability, but keep human or external verification in the loop.",
+      "why_it_matters": [
+        "One agent may overproduce issues.",
+        "A second agent can challenge those claims.",
+        "A third pass can arbitrate, creating a more disciplined review pipeline."
+      ],
+      "signals_of_good_use": [
+        "Generator and critic roles are clearly distinct.",
+        "Claims are evaluated against evidence, not just rhetoric.",
+        "The final output preserves uncertainty where appropriate."
+      ],
+      "failure_modes": [
+        "correlated model errors",
+        "false confidence from multiple agreeing agents",
+        "referee agents inheriting the same blind spots as the others"
+      ],
+      "agent_instruction_pattern": [
+        "Pass 1: enumerate possible issues broadly.",
+        "Pass 2: aggressively challenge each issue with evidence.",
+        "Pass 3: reconcile the two and classify each claim."
+      ],
+      "human_review_questions": [
+        "Are these truly independent perspectives, or just the same model talking to itself three times?",
+        "What external evidence verifies the disputed findings?",
+        "Which claims remain uncertain even after arbitration?"
+      ],
+      "when_it_breaks": [
+        "When all passes share the same missing evidence",
+        "when the reviewer accepts arbitration output without inspection",
+        "when the task requires domain knowledge absent from all participants"
+      ]
+    },
+    {
+      "id": "H06",
+      "name": "Assumptions are a primary failure source",
+      "summary": "Agent quality often collapses when missing information forces the model to infer intent, invariants, or system behavior without adequate grounding.",
+      "why_it_matters": [
+        "Agents are much stronger at working from explicit constraints than at filling in invisible context.",
+        "Undocumented tribal knowledge creates hidden traps.",
+        "Unstated assumptions turn plausible output into unreliable output.",
+        "Persisting decisions, plans, and assumptions in lightweight artifacts (task plans, notes, or logs) reduces reliance on transient conversational context."
+      ],
+      "signals_of_good_use": [
+        "The task includes explicit constraints and definitions.",
+        "Unknowns are surfaced instead of silently guessed.",
+        "The agent re-reads task plans and relevant files before continuing after interruption.",
+        "Important assumptions and decisions are written into task artifacts rather than remaining implicit in conversation history."
+      ],
+      "failure_modes": [
+        "speculation dressed as implementation",
+        "incorrect inferred requirements",
+        "confident but wrong system reasoning"
+      ],
+      "agent_instruction_pattern": [
+        "If required information is missing, state the gap explicitly.",
+        "Re-read the task plan and the relevant files before resuming after context loss or compaction.",
+        "When assumptions, plans, or unresolved questions become significant to the task, record them in a durable artifact rather than relying on session memory.",
+        "If uncertainty prevents confident execution, pause and surface the uncertainty rather than proceeding with guessed requirements."
+      ],
+      "human_review_questions": [
+        "What is the agent assuming here?",
+        "Which invariant exists in my head but not in the repo or task spec?",
+        "Did the failure expose a documentation gap rather than only a model gap?"
+      ],
+      "when_it_breaks": [
+        "Exploratory ideation tasks",
+        "brainstorming sessions where assumptions are part of the exercise"
+      ]
+    },
+    {
+      "id": "H07",
+      "name": "Define termination explicitly",
+      "summary": "Agents need concrete, testable definitions of done because they do not reliably infer when a task is truly complete.",
+      "why_it_matters": [
+        "Without a finish line, agents often stop at a plausible midpoint.",
+        "Stubs, partial implementations, and unverified completions become common.",
+        "Deterministic completion criteria improve both execution quality and trust.",
+        "Tasks that are too large often lack clear termination conditions and verification scope."
+      ],
+      "signals_of_good_use": [
+        "The task has explicit acceptance criteria.",
+        "Tests or checks define minimum completion conditions.",
+        "The agent is not allowed to declare success without verification."
+      ],
+      "failure_modes": [
+        "unfinished implementations",
+        "passing descriptions of work instead of completed work",
+        "premature task termination"
+      ],
+      "agent_instruction_pattern": [
+        "The task is not complete until all specified checks pass.",
+        "Do not modify the acceptance tests unless explicitly instructed to revise the contract itself."
+      ],
+      "human_review_questions": [
+        "How would I know this task is complete if a human handed it back to me?",
+        "What objective checks prove the work is done?",
+        "What loopholes allow false completion?",
+        "Is the task small enough that its completion criteria are unambiguous?"
+      ],
+      "when_it_breaks": [
+        "Open-ended research",
+        "creative ideation",
+        "prototype spikes where learning is the goal rather than production readiness"
+      ]
+    },
+    {
+      "id": "H08",
+      "name": "Use layered verification",
+      "summary": "Combine multiple forms of verification such as tests, screenshots, logs, and behavioral checks rather than relying on one signal alone.",
+      "why_it_matters": [
+        "Passing tests do not guarantee correct user experience.",
+        "Visual checks catch classes of problems not covered by logic tests.",
+        "Layered verification reduces blind spots.",
+        "Different classes of evidence (static checks, runtime behavior, visual inspection, and requirement alignment) catch different failure modes."
+      ],
+      "signals_of_good_use": [
+        "Functional checks exist for behavior.",
+        "Visual or observational checks exist for UI-sensitive work.",
+        "Verification is aligned with the actual risk profile of the task.",
+        "Verification uses multiple evidence types when risk justifies it (for example: tests + logs + UI confirmation)."
+      ],
+      "failure_modes": [
+        "over-reliance on unit tests",
+        "visual regressions slipping through",
+        "false security from one green signal"
+      ],
+      "agent_instruction_pattern": [
+        "Run the functional checks first.",
+        "Then run or inspect visual or behavioral verification appropriate to the task.",
+        "Report mismatches rather than declaring victory on partial evidence."
+      ],
+      "human_review_questions": [
+        "What kind of failure would this verification miss?",
+        "Is this UI behavior correct, or merely test-passing?",
+        "Do we need semantic, visual, and integration-level evidence?",
+        "What class of evidence is missing from this verification?"
+      ],
+      "when_it_breaks": [
+        "Extremely small internal changes where broader verification is wasteful",
+        "non-UI utilities with narrowly bounded behavior"
+      ]
+    },
+    {
+      "id": "H09",
+      "name": "Prefer fresh sessions for bounded work",
+      "summary": "Use a new session or execution context per contract-sized unit of work whenever practical.",
+      "why_it_matters": [
+        "Fresh sessions reduce contamination from prior tasks.",
+        "Bounded work units are easier to reason about, reproduce, and verify.",
+        "Long-running sessions often accumulate unrelated context and drift."
+      ],
+      "signals_of_good_use": [
+        "Each unit of work has a clear contract or task spec.",
+        "The agent is not carrying large amounts of history across unrelated tasks.",
+        "Failures can be isolated to one task context."
+      ],
+      "failure_modes": [
+        "long-session drift",
+        "cross-task contamination",
+        "context bloat from multi-contract execution"
+      ],
+      "agent_instruction_pattern": [
+        "Treat each contract as a separate execution unit unless continuity is essential.",
+        "Load only the contract, the relevant files, and the required rules."
+      ],
+      "human_review_questions": [
+        "Would a fresh start improve clarity here?",
+        "What useful state would actually be lost by restarting?",
+        "Is this session carrying too many unrelated goals?"
+      ],
+      "when_it_breaks": [
+        "deep exploratory refactors",
+        "multi-stage investigations with heavy accumulated evidence",
+        "interactive debugging where continuity is the main asset"
+      ]
+    },
+    {
+      "id": "H10",
+      "name": "Encode preferences as rules and recipes as skills",
+      "summary": "Distinguish between constraints on behavior and reusable procedures for solving recurring classes of tasks.",
+      "why_it_matters": [
+        "Not all repeated guidance is the same.",
+        "Rules prevent unwanted behavior.",
+        "Skills operationalize preferred methods."
+      ],
+      "signals_of_good_use": [
+        "Rules are concise and normative.",
+        "Skills are procedural and scenario-specific.",
+        "The routing layer only loads what is relevant."
+      ],
+      "failure_modes": [
+        "mixing prohibitions and procedures into giant instruction files",
+        "unclear naming",
+        "loading every rule and skill for every task"
+      ],
+      "agent_instruction_pattern": [
+        "Read rules before acting in the governed domain.",
+        "Invoke the relevant skill when the scenario matches the skill's intended use."
+      ],
+      "human_review_questions": [
+        "Is this guidance a constraint or a recipe?",
+        "Would a future agent know when this applies?",
+        "Can this be named and routed more clearly?"
+      ],
+      "when_it_breaks": [
+        "Very small solo projects where explicit operational memory is unnecessary",
+        "highly novel work with little repeatability"
+      ]
+    },
+    {
+      "id": "H11",
+      "name": "Use the root instruction file as a router, not a landfill",
+      "summary": "A top-level agent instruction file should primarily direct the agent to the right context, rather than contain every rule, skill, and preference inline.",
+      "why_it_matters": [
+        "Routing preserves focus.",
+        "A compact entrypoint reduces startup confusion.",
+        "Conditional loading is more scalable than global loading."
+      ],
+      "signals_of_good_use": [
+        "The root file is short and organized.",
+        "It contains branching logic or routing guidance.",
+        "Detailed instructions live in smaller specialized files."
+      ],
+      "failure_modes": [
+        "monolithic instruction files",
+        "contradictions hidden in long documents",
+        "startup overload from reading everything every time"
+      ],
+      "agent_instruction_pattern": [
+        "Start from the root router.",
+        "Load only the branch relevant to the current task type and state."
+      ],
+      "human_review_questions": [
+        "Does this file direct, or does it dump?",
+        "Can a new contributor understand the routing logic quickly?",
+        "What instructions belong in specialized leaves instead of the root?"
+      ],
+      "when_it_breaks": [
+        "Tiny projects with only one work mode",
+        "tasks so simple that routing overhead exceeds the benefit"
+      ]
+    },
+    {
+      "id": "H12",
+      "name": "Continuously prune and consolidate",
+      "summary": "Rules, skills, and orchestration logic naturally decay; periodically refactor them to remove contradictions, duplication, and stale guidance.",
+      "why_it_matters": [
+        "Append-only process memory becomes noisy and self-conflicting.",
+        "Old instructions can outlive the conditions that made them useful.",
+        "Performance often declines gradually as operational memory grows."
+      ],
+      "signals_of_good_use": [
+        "Periodic reviews of rules and skills occur.",
+        "Redundant instructions are merged.",
+        "Outdated guidance is archived or deleted."
+      ],
+      "failure_modes": [
+        "instruction creep",
+        "contradictory rules",
+        "workflow regression caused by stale process memory"
+      ],
+      "agent_instruction_pattern": [
+        "Periodically review operational guidance for duplication, contradictions, and stale assumptions.",
+        "Propose consolidation where multiple files appear to govern the same scenario."
+      ],
+      "human_review_questions": [
+        "What instructions no longer reflect current practice?",
+        "Which files overlap?",
+        "Have we been adding guidance faster than we refine it?"
+      ],
+      "when_it_breaks": [
+        "Emergency situations where speed matters more than elegance",
+        "new systems still too early in their lifecycle to consolidate meaningfully"
+      ]
+    },
+    {
+      "id": "H13",
+      "name": "Iterate from observed failure, not imagined perfection",
+      "summary": "Start with a simple workflow, watch where it fails in practice, and add structure only where evidence justifies it.",
+      "why_it_matters": [
+        "Early overdesign creates friction without proven value.",
+        "Observed failure modes produce better rules than speculative fears.",
+        "This mirrors how strong engineering systems evolve over time."
+      ],
+      "signals_of_good_use": [
+        "Each added rule or skill is traceable to a real recurring issue.",
+        "The workflow remains understandable as it grows.",
+        "Teams can explain why a given structure exists."
+      ],
+      "failure_modes": [
+        "designing for hypothetical edge cases",
+        "ritualized complexity",
+        "operational bureaucracy detached from real problems"
+      ],
+      "agent_instruction_pattern": [
+        "When failure recurs, capture the pattern and propose a targeted rule or skill.",
+        "Do not generalize one-off anomalies into global process unless repetition justifies it."
+      ],
+      "human_review_questions": [
+        "What real failure led to this structure?",
+        "Is this rule solving a recurring problem or a single anecdote?",
+        "Would a simpler mechanism achieve the same protection?"
+      ],
+      "when_it_breaks": [
+        "high-risk domains where speculative safeguards are warranted before incidents occur"
+      ]
+    },
+    {
+      "id": "H14",
+      "name": "Product convergence is a clue, not a law",
+      "summary": "When multiple frontier tools adopt a feature, that is evidence of usefulness, but not proof that the feature is universally optimal or sufficient.",
+      "why_it_matters": [
+        "Convergence often indicates repeated real-world demand.",
+        "Built-in support lowers maintenance burden for users.",
+        "But vendor productization is shaped by market and product concerns, not only truth."
+      ],
+      "signals_of_good_use": [
+        "A feature is supported by multiple major platforms.",
+        "The feature solves a recurring operational problem directly.",
+        "Built-in support meaningfully reduces custom scaffolding."
+      ],
+      "failure_modes": [
+        "assuming official support means universal best practice",
+        "ignoring valuable niche tools because they are not mainstream",
+        "outsourcing judgment to vendor roadmaps"
+      ],
+      "agent_instruction_pattern": [
+        "Prefer built-in solutions for broadly common needs, but remain open to specialized tools when the problem warrants them."
+      ],
+      "human_review_questions": [
+        "Is this feature popular because it is useful, or merely because it is visible?",
+        "Do our constraints match the mainstream use case?",
+        "Would a niche solution still be better for this context?"
+      ],
+      "when_it_breaks": [
+        "specialized enterprise needs",
+        "novel workflows not yet represented in mainstream products",
+        "edge cases outside vendor priority"
+      ]
+    },
+    {
+      "id": "H15",
+      "name": "Always preserve human accountability",
+      "summary": "Delegation does not remove responsibility; the human operator or team remains accountable for correctness, risk, and downstream impact.",
+      "why_it_matters": [
+        "Agents can accelerate design and implementation but still produce subtle errors.",
+        "Confidence generated by speed or fluency can mask risk.",
+        "Real software systems carry user, business, and operational consequences."
+      ],
+      "signals_of_good_use": [
+        "A human validates high-risk outputs.",
+        "Critical paths receive explicit review and verification.",
+        "The team understands that delegation changes labor, not ownership."
+      ],
+      "failure_modes": [
+        "automation theater",
+        "trusting fluent output as proof of correctness",
+        "diffusing responsibility because 'the agent did it'"
+      ],
+      "agent_instruction_pattern": [
+        "Provide evidence for claims and implementation choices.",
+        "Surface uncertainty clearly so a human reviewer can make the final judgment where needed."
+      ],
+      "human_review_questions": [
+        "What would I still be responsible for if this failed in production?",
+        "Which parts of this output deserve the highest scrutiny?",
+        "Am I reviewing substance, or just admiring fluency?"
+      ],
+      "when_it_breaks": [
+        "It does not truly break; it is a governing principle across all other heuristics."
+      ]
+    }
+  ],
+  "recommended_operating_sequence": [
+    "Define the task boundary.",
+    "Decide whether this is research, implementation, investigation, or verification.",
+    "Load only the relevant context.",
+    "Route to the necessary rules and skills.",
+    "State explicit acceptance criteria.",
+    "Execute in a fresh session when practical.",
+    "Verify using layered checks.",
+    "Surface assumptions and unresolved uncertainties.",
+    "Review and own the result.",
+    "Capture recurring lessons as rules or skills.",
+    "Periodically prune the operational memory."
+  ],
+  "anti_patterns": [
+    {
+      "name": "Prompt-and-pray",
+      "description": "Giving a vague high-level request and assuming model intelligence will compensate for missing design, context, and acceptance criteria."
+    },
+    {
+      "name": "Instruction landfill",
+      "description": "Stuffing every rule, preference, and memory into one giant root file."
+    },
+    {
+      "name": "Context maximalism",
+      "description": "Assuming more context is always better, regardless of relevance."
+    },
+    {
+      "name": "Single-signal trust",
+      "description": "Treating one passing test, one screenshot, or one agent opinion as sufficient proof."
+    },
+    {
+      "name": "Session immortality",
+      "description": "Keeping agents running indefinitely across unrelated tasks and expecting stable performance."
+    },
+    {
+      "name": "Vendor determinism",
+      "description": "Assuming official product features are always the best answer for every workflow."
+    },
+    {
+      "name": "Ephemeral reasoning",
+      "description": "Allowing critical decisions, assumptions, or plans to exist only in transient session context rather than recording them in inspectable artifacts."
+    }
+  ],
+  "compact_agent_facing_summary": {
+    "mission": "Operate with bounded context, explicit goals, and verifiable completion.",
+    "rules_of_thumb": [
+      "Load less, but make it relevant.",
+      "Do research and implementation in separate phases when possible.",
+      "Do not infer missing requirements silently.",
+      "Use neutral investigation language unless adversarial posture is explicitly requested.",
+      "Do not declare completion without passing the stated checks.",
+      "Prefer fresh task contexts for bounded units of work.",
+      "Use rules for constraints and skills for repeatable methods.",
+      "Treat root instructions as routing logic.",
+      "Consolidate stale operational guidance regularly.",
+      "Surface uncertainty and preserve human accountability."
+    ]
+  }
+}
