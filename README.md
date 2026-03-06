@@ -2,6 +2,8 @@
 
 This repository contains a structured heuristic framework for agentic software development and a lightweight static web viewer for exploring it.
 
+## Heuristic Details
+
 The core source is [`heuristics.json`](/home/jtimm/dev/github.com/jtimm/agentic-dev-heuristics/heuristics.json), which defines:
 - Document metadata (`document_name`, `version`, `purpose`, intended audience)
 - A top-level principle: **Own the system, not just the prompt**
@@ -10,6 +12,14 @@ The core source is [`heuristics.json`](/home/jtimm/dev/github.com/jtimm/agentic-
 - A set of anti-patterns to avoid
 - A compact agent-facing summary with mission + rules of thumb
 
+## Heuristics Viewer
+
+### View Heuristics in GitHub Pages
+
+See [GitHub Pages](https://jtimm.github.io/agentic-dev-heuristics/viewer.html)
+
+### Viewer Details
+
 The viewer is a static frontend:
 - [`viewer.html`](/home/jtimm/dev/github.com/jtimm/agentic-dev-heuristics/viewer.html)
 - [`viewer.css`](/home/jtimm/dev/github.com/jtimm/agentic-dev-heuristics/viewer.css)
@@ -17,7 +27,7 @@ The viewer is a static frontend:
 
 It supports search, section filtering, summary/detail modes, hash-based deep linking (for example `#H06`), and loads `heuristics.json` via `fetch`.
 
-## Serve locally
+### Serve Viewer Locally
 
 Because the viewer loads JSON with `fetch`, run a local HTTP server instead of opening the HTML file directly.
 
